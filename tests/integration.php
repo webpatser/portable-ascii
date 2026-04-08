@@ -7,12 +7,12 @@
  * Run: php tests/integration.php (from a project with laravel/framework installed)
  */
 
-require __DIR__ . '/../vendor/autoload.php';
-
-// If run from the laravel-test directory in CI, adjust autoload path
-if (! class_exists(\Illuminate\Support\Str::class)) {
-    require getcwd() . '/vendor/autoload.php';
+// Load autoloader: prefer cwd (CI runs from laravel-test/), fall back to package vendor
+$autoload = getcwd() . '/vendor/autoload.php';
+if (! file_exists($autoload)) {
+    $autoload = __DIR__ . '/../vendor/autoload.php';
 }
+require $autoload;
 
 use Illuminate\Support\Str;
 
