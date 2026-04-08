@@ -69,26 +69,34 @@ jobs:
           extensions: intl, mbstring
           coverage: none
 
-      - name: Create test project
+      - name: Install Laravel framework with dev dependencies
         run: |
           mkdir laravel-test && cd laravel-test
           composer init --name=test/laravel-integration --no-interaction
           composer config minimum-stability dev
           composer config prefer-stable true
           composer config repositories.portable-ascii path ../portable-ascii
-          composer require "laravel/framework:${{ matrix.laravel }}" "webpatser/portable-ascii:*@dev" --no-interaction
+          composer require "laravel/framework:${{ matrix.laravel }}" "webpatser/portable-ascii:*@dev" "orchestra/testbench-core:*" "phpunit/phpunit:*" --no-interaction
 
       - name: Verify replacement
         run: |
           cd laravel-test
-          # Confirm voku/portable-ascii is NOT installed separately
           if [ -d vendor/voku/portable-ascii ]; then
             echo "FAIL: voku/portable-ascii should be replaced, not installed"
             exit 1
           fi
           echo "OK: voku/portable-ascii correctly replaced"
 
-      - name: Run integration tests
+      - name: Run Laravel Str/Stringable tests
+        run: |
+          cd laravel-test
+          # Run only the test methods that exercise portable-ascii
+          vendor/bin/phpunit \
+            --filter="testStringAscii|testStringAsciiWithSpecificLocale|testSlug|testAsciiNull|testTransliterate|testTransliterateOverrideUnknown|testTransliterateStrict|testStringCanBeLimitedByWordsNonAscii" \
+            vendor/laravel/framework/tests/Support/SupportStrTest.php \
+            vendor/laravel/framework/tests/Support/SupportStringableTest.php
+
+      - name: Run integration smoke test
         run: |
           cd laravel-test
           php ../portable-ascii/tests/integration.php
