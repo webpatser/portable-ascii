@@ -1,0 +1,42 @@
+{
+    "name": "webpatser/fledge-portable-ascii",
+    "description": "Portable ASCII library - PHP 8.5 optimized with native intl transliteration.",
+    "type": "library",
+    "keywords": ["ascii", "transliterate", "slug", "unicode", "php85", "fledge"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christoph Kempen",
+            "homepage": "https://github.com/webpatser"
+        }
+    ],
+    "require": {
+        "php": "^8.5",
+        "ext-intl": "*"
+    },
+    "require-dev": {
+        "pestphp/pest": "^4.0"
+    },
+    "replace": {
+        "voku/portable-ascii": "2.0.99",
+        "webpatser/portable-ascii": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "voku\\": "src/voku/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,43 @@
+{
+    "name": "webpatser/portable-ascii",
+    "description": "Portable ASCII library - modernized for PHP 8.1+ with performance optimizations.",
+    "type": "library",
+    "keywords": ["ascii", "transliterate", "slug", "unicode", "php8"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christoph Kempen",
+            "homepage": "https://github.com/webpatser"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0 || ^4.0"
+    },
+    "suggest": {
+        "ext-intl": "For faster transliteration via transliterator_transliterate()"
+    },
+    "replace": {
+        "voku/portable-ascii": "2.0.99"
+    },
+    "autoload": {
+        "psr-4": {
+            "voku\\": "src/voku/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
