@@ -17,7 +17,9 @@
         "pestphp/pest": "^3.0 || ^4.0"
     },
     "suggest": {
-        "ext-intl": "For faster transliteration via transliterator_transliterate()"
+        "ext-intl": "For fastest transliteration via ICU (recommended)",
+        "ext-iconv": "For fast ASCII transliteration fallback",
+        "ext-mbstring": "For optimized character splitting"
     },
     "replace": {
         "voku/portable-ascii": "2.0.99"

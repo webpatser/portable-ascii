@@ -162,11 +162,19 @@ echo json_encode($results);
 
 // --- Run original benchmark ---
 
+$extensions = array_filter([
+    'intl'     => extension_loaded('intl'),
+    'iconv'    => extension_loaded('iconv'),
+    'mbstring' => extension_loaded('mbstring'),
+]);
+$extList = $extensions ? implode(', ', array_keys($extensions)) : 'none';
+
 echo "╔══════════════════════════════════════════════════════════════╗\n";
 echo "║  portable-ascii Benchmark: original vs fork                 ║\n";
 echo "╠══════════════════════════════════════════════════════════════╣\n";
 echo "║  Iterations per test: " . str_pad((string) $iterations, 36) . " ║\n";
 echo "║  PHP: " . str_pad(PHP_VERSION, 52) . " ║\n";
+echo "║  Extensions: " . str_pad($extList, 45) . " ║\n";
 echo "╚══════════════════════════════════════════════════════════════╝\n\n";
 
 $payload = json_encode(['samples' => $samples, 'languages' => $languages]);

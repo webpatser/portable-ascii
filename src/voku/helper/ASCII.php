@@ -190,6 +190,44 @@ final class ASCII
         8297 => "\xE2\x81\xA9",
     ];
 
+    /** @var array{php: int, mbstring: bool, iconv: bool, intl: bool}|null */
+    private static ?array $CAPABILITIES = null;
+
+    private static function capabilities(): array
+    {
+        if (self::$CAPABILITIES === null) {
+            self::$CAPABILITIES = [
+                'php'      => \PHP_VERSION_ID,
+                'mbstring' => \extension_loaded('mbstring'),
+                'iconv'    => \extension_loaded('iconv'),
+                'intl'     => \extension_loaded('intl'),
+            ];
+        }
+
+        return self::$CAPABILITIES;
+    }
+
+    /**
+     * Override capability detection (for benchmarking/testing only).
+     *
+     * @param array{php?: int, mbstring?: bool, iconv?: bool, intl?: bool}|null $caps
+     */
+    public static function setCapabilities(?array $caps): void
+    {
+        if ($caps === null) {
+            self::$CAPABILITIES = null;
+
+            return;
+        }
+
+        self::$CAPABILITIES = [
+            'php'      => $caps['php'] ?? \PHP_VERSION_ID,
+            'mbstring' => $caps['mbstring'] ?? false,
+            'iconv'    => $caps['iconv'] ?? false,
+            'intl'     => $caps['intl'] ?? false,
+        ];
+    }
+
     /**
      * Get all languages from the constants "ASCII::.*LANGUAGE_CODE".
      *
@@ -518,7 +556,7 @@ final class ASCII
             return true;
         }
 
-        return !\preg_match('/' . self::$REGEX_ASCII . '/', $str);
+        return !\preg_match("/[^\x09\x0A\x0D\x20-\x7E]/", $str);
     }
 
     /**
@@ -782,140 +820,62 @@ final class ASCII
             $EXTRA_SYMBOLS_CACHE = \implode('', $EXTRA_SYMBOLS_CACHE);
         }
 
-        $charDone = [];
         if (\preg_match_all('/' . self::$REGEX_ASCII . ($replace_extra_symbols ? '|[' . $EXTRA_SYMBOLS_CACHE . ']' : '') . '/u', $str, $matches)) {
-            if (!$replace_single_chars_only) {
-                if (self::$LANGUAGE_MAX_KEY === null) {
-                    self::$LANGUAGE_MAX_KEY = self::getData('ascii_language_max_key');
-                }
+            if ($replace_single_chars_only) {
+                $map = \array_filter(
+                    $REPLACE_HELPER_CACHE[$cacheKey],
+                    static fn(string $key): bool => \mb_strlen($key) === 1,
+                    \ARRAY_FILTER_USE_KEY
+                );
+                $str = \strtr($str, $map);
+            } else {
+                $uniqueChars = \array_unique($matches[0]);
+                $matchCount = \count($uniqueChars);
 
-                $maxKeyLength = self::$LANGUAGE_MAX_KEY[$language] ?? 0;
+                if ($matchCount > 10) {
+                    // Dense non-ASCII: strtr() on full map — C-level scan wins
+                    $str = \strtr($str, $REPLACE_HELPER_CACHE[$cacheKey]);
+                } else {
+                    // Sparse non-ASCII: build minimal map from matched chars only
+                    $fullMap = $REPLACE_HELPER_CACHE[$cacheKey];
+                    $map = [];
 
-                if ($maxKeyLength >= 5) {
-                    foreach ($matches[0] as $keyTmp => $char) {
-                        if (isset($matches[0][$keyTmp + 4])) {
-                            $fiveChars = $matches[0][$keyTmp + 0] . $matches[0][$keyTmp + 1] . $matches[0][$keyTmp + 2] . $matches[0][$keyTmp + 3] . $matches[0][$keyTmp + 4];
-                        } else {
-                            $fiveChars = null;
-                        }
-                        if (
-                            $fiveChars
-                            &&
-                            !isset($charDone[$fiveChars])
-                            &&
-                            isset($REPLACE_HELPER_CACHE[$cacheKey][$fiveChars])
-                            &&
-                            \str_contains($str, $fiveChars)
-                        ) {
-                            // DEBUG
-                            //\var_dump($str, $fiveChars, $REPLACE_HELPER_CACHE[$cacheKey][$fiveChars]);
-
-                            $charDone[$fiveChars] = true;
-                            $str = \str_replace($fiveChars, $REPLACE_HELPER_CACHE[$cacheKey][$fiveChars], $str);
-
-                            // DEBUG
-                            //\var_dump($str, "\n");
+                    foreach ($uniqueChars as $char) {
+                        if (isset($fullMap[$char])) {
+                            $map[$char] = $fullMap[$char];
                         }
                     }
-                }
 
-                if ($maxKeyLength >= 4) {
-                    foreach ($matches[0] as $keyTmp => $char) {
-                        if (isset($matches[0][$keyTmp + 3])) {
-                            $fourChars = $matches[0][$keyTmp + 0] . $matches[0][$keyTmp + 1] . $matches[0][$keyTmp + 2] . $matches[0][$keyTmp + 3];
-                        } else {
-                            $fourChars = null;
+                    // Multi-char sequences (digraphs: Greek αυ→au, Ukrainian зг→zgh,
+                    // extras like °C→Celsius). Only build candidates when needed.
+                    if (self::$LANGUAGE_MAX_KEY === null) {
+                        self::$LANGUAGE_MAX_KEY = self::getData('ascii_language_max_key');
+                    }
+                    $maxKeyLength = self::$LANGUAGE_MAX_KEY[$language] ?? 0;
+
+                    // Extras (temperature, currency) have multi-char keys up to 3
+                    if ($replace_extra_symbols && $maxKeyLength < 3) {
+                        $maxKeyLength = 3;
+                    }
+
+                    if ($maxKeyLength >= 2 && $matchCount >= 2) {
+                        $matchedChars = $matches[0];
+                        $total = \count($matchedChars);
+
+                        for ($len = \min($maxKeyLength, $total); $len >= 2; $len--) {
+                            for ($i = 0, $end = $total - $len; $i <= $end; $i++) {
+                                $seq = \implode('', \array_slice($matchedChars, $i, $len));
+
+                                if (isset($fullMap[$seq]) && !isset($map[$seq])) {
+                                    $map[$seq] = $fullMap[$seq];
+                                }
+                            }
                         }
-                        if (
-                            $fourChars
-                            &&
-                            !isset($charDone[$fourChars])
-                            &&
-                            isset($REPLACE_HELPER_CACHE[$cacheKey][$fourChars])
-                            &&
-                            \str_contains($str, $fourChars)
-                        ) {
-                            // DEBUG
-                            //\var_dump($str, $fourChars, $REPLACE_HELPER_CACHE[$cacheKey][$fourChars]);
-
-                            $charDone[$fourChars] = true;
-                            $str = \str_replace($fourChars, $REPLACE_HELPER_CACHE[$cacheKey][$fourChars], $str);
-
-                            // DEBUG
-                            //\var_dump($str, "\n");
-                        }
                     }
-                }
 
-                foreach ($matches[0] as $keyTmp => $char) {
-                    if (isset($matches[0][$keyTmp + 2])) {
-                        $threeChars = $matches[0][$keyTmp + 0] . $matches[0][$keyTmp + 1] . $matches[0][$keyTmp + 2];
-                    } else {
-                        $threeChars = null;
+                    if ($map !== []) {
+                        $str = \strtr($str, $map);
                     }
-                    if (
-                        $threeChars
-                        &&
-                        !isset($charDone[$threeChars])
-                        &&
-                        isset($REPLACE_HELPER_CACHE[$cacheKey][$threeChars])
-                        &&
-                        \str_contains($str, $threeChars)
-                    ) {
-                        // DEBUG
-                        //\var_dump($str, $threeChars, $REPLACE_HELPER_CACHE[$cacheKey][$threeChars]);
-
-                        $charDone[$threeChars] = true;
-                        $str = \str_replace($threeChars, $REPLACE_HELPER_CACHE[$cacheKey][$threeChars], $str);
-
-                        // DEBUG
-                        //\var_dump($str, "\n");
-                    }
-                }
-
-                foreach ($matches[0] as $keyTmp => $char) {
-                    if (isset($matches[0][$keyTmp + 1])) {
-                        $twoChars = $matches[0][$keyTmp + 0] . $matches[0][$keyTmp + 1];
-                    } else {
-                        $twoChars = null;
-                    }
-                    if (
-                        $twoChars
-                        &&
-                        !isset($charDone[$twoChars])
-                        &&
-                        isset($REPLACE_HELPER_CACHE[$cacheKey][$twoChars])
-                        &&
-                        \str_contains($str, $twoChars)
-                    ) {
-                        // DEBUG
-                        //\var_dump($str, $twoChars, $REPLACE_HELPER_CACHE[$cacheKey][$twoChars]);
-
-                        $charDone[$twoChars] = true;
-                        $str = \str_replace($twoChars, $REPLACE_HELPER_CACHE[$cacheKey][$twoChars], $str);
-
-                        // DEBUG
-                        //\var_dump($str, "\n");
-                    }
-                }
-            }
-
-            foreach ($matches[0] as $char) {
-                if (
-                    !isset($charDone[$char])
-                    &&
-                    isset($REPLACE_HELPER_CACHE[$cacheKey][$char])
-                    &&
-                    \str_contains($str, $char)
-                ) {
-                    // DEBUG
-                    //\var_dump($str, $char, $REPLACE_HELPER_CACHE[$cacheKey][$char]);
-
-                    $charDone[$char] = true;
-                    $str = \str_replace($char, $REPLACE_HELPER_CACHE[$cacheKey][$char], $str);
-
-                    // DEBUG
-                    //\var_dump($str, "\n");
                 }
             }
         }
@@ -1043,7 +1003,7 @@ final class ASCII
             $str = \strtolower($str);
         }
 
-        $str = (string) \preg_replace('/^[\'\\s]+|[\'\\s]+$/', '', $str);
+        $str = \trim($str, "' \t\n\r\0\x0B");
         $str = (string) \preg_replace('/\\B([A-Z])/', '-\1', $str);
         $str = (string) \preg_replace('/[\\-_\\s]+/', $separator, $str);
 
@@ -1087,66 +1047,52 @@ final class ASCII
 
         static $TRANSLITERATOR = null;
 
-        static $SUPPORT_INTL = null;
-
         if ($str === '') {
             return '';
         }
 
-        if ($SUPPORT_INTL === null) {
-            $SUPPORT_INTL = \extension_loaded('intl');
-        }
-
-        // check if we only have ASCII, first (better performance)
-        $str_tmp = $str;
         if (self::is_ascii($str)) {
             return $str;
         }
 
         $str = self::clean($str);
 
-        // check again if we only have ASCII, now ...
-        if (
-            $str_tmp !== $str
-            &&
-            self::is_ascii($str)
-        ) {
+        if (self::is_ascii($str)) {
             return $str;
         }
 
-        if (
-            $strict
-            &&
-            $SUPPORT_INTL === true
-        ) {
-            if (!isset($TRANSLITERATOR)) {
-                // INFO: see "*-Latin" rules via "transliterator_list_ids()"
+        $caps = self::capabilities();
+
+        // Strategy 1: ext-intl — only in strict mode (different output than bank files)
+        if ($strict && $caps['intl']) {
+            if ($TRANSLITERATOR === null) {
                 $TRANSLITERATOR = \transliterator_create('NFKC; [:Nonspacing Mark:] Remove; NFKC; Any-Latin; Latin-ASCII;');
             }
 
-            // INFO: https://unicode.org/cldr/utility/character.jsp
-            $str_tmp = \transliterator_transliterate($TRANSLITERATOR, $str);
+            if ($TRANSLITERATOR !== null) {
+                $result = \transliterator_transliterate($TRANSLITERATOR, $str);
 
-            if ($str_tmp !== false) {
-                // check again if we only have ASCII, now ...
-                if (
-                    $str_tmp !== $str
-                    &&
-                    self::is_ascii($str_tmp)
-                ) {
-                    return $str_tmp;
+                if ($result !== false) {
+                    if (self::is_ascii($result)) {
+                        return $result;
+                    }
+
+                    $str = $result;
                 }
-
-                $str = $str_tmp;
             }
         }
 
+        // Strategy 3: manual byte decoding (pure PHP fallback)
         if (self::$ORD === null) {
             self::$ORD = self::getData('ascii_ord');
         }
 
-        \preg_match_all('/.|[^\x00]$/us', $str, $array_tmp);
-        $chars = $array_tmp[0];
+        if ($caps['mbstring']) {
+            $chars = \mb_str_split($str, 1, 'UTF-8');
+        } else {
+            \preg_match_all('/.|[^\x00]$/us', $str, $array_tmp);
+            $chars = $array_tmp[0];
+        }
         $ord = null;
         $str_tmp = '';
         foreach ($chars as &$c) {
