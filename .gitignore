@@ -2,3 +2,8 @@
 composer.lock
 .phpunit.result.cache
 .phpunit.cache/
+benchmark/vendor-original/
+benchmark/composer-original.json
+benchmark/composer-original.lock
+benchmark/run-original.php
+benchmark/results.json
