@@ -36,10 +36,9 @@ $methods = [
 ];
 
 $profiles = [
-    'vanilla'       => ['mbstring' => false, 'iconv' => false, 'intl' => false],
-    'mbstring'      => ['mbstring' => true,  'iconv' => false, 'intl' => false],
-    'iconv'         => ['mbstring' => false, 'iconv' => true,  'intl' => false],
-    'all_ext'       => ['mbstring' => true,  'iconv' => true,  'intl' => true],
+    'vanilla'       => ['mbstring' => false, 'intl' => false],
+    'mbstring'      => ['mbstring' => true,  'intl' => false],
+    'all_ext'       => ['mbstring' => true,  'intl' => true],
 ];
 
 // --- Benchmark helpers ---
@@ -110,7 +109,6 @@ echo "║  PHP: " . str_pad(PHP_VERSION, 66) . "║\n";
 echo "║  Iterations: " . str_pad((string) $iterations, 59) . "║\n";
 echo "║  Available: " . str_pad(implode(', ', array_filter([
     extension_loaded('mbstring') ? 'mbstring' : '',
-    extension_loaded('iconv') ? 'iconv' : '',
     extension_loaded('intl') ? 'intl' : '',
 ])), 60) . "║\n";
 echo "╚═══════════════════════════════════════════════════════════════════════════╝\n\n";

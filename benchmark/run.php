@@ -164,7 +164,6 @@ echo json_encode($results);
 
 $extensions = array_filter([
     'intl'     => extension_loaded('intl'),
-    'iconv'    => extension_loaded('iconv'),
     'mbstring' => extension_loaded('mbstring'),
 ]);
 $extList = $extensions ? implode(', ', array_keys($extensions)) : 'none';

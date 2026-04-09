@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `is_ascii()`: **-35%** by inlining the regex pattern
 
 ### Added
-- Runtime capability detection for PHP extensions (ext-mbstring, ext-iconv, ext-intl)
-- Cascading transliteration strategy: ext-intl -> manual byte decoding with `mb_str_split()` when available
+- Runtime capability detection for PHP extensions (ext-mbstring, ext-intl)
+- `mb_str_split()` replacing `preg_match_all` for character splitting when ext-mbstring available
 - `setCapabilities()` method for benchmarking/testing extension profiles
 - Benchmark scripts: `benchmark/run.php` (fork vs original) and `benchmark/run-profiles.php` (extension comparison)
 

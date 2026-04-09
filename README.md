@@ -23,17 +23,16 @@ The original `voku/portable-ascii` package (471M+ installs) still requires PHP 7
 
 ## Performance
 
-Benchmarked on PHP 8.5 with real-world inputs (German/French/Russian blog titles, product names, URL slugs, long text). Each profile was run in an isolated process, 5000 iterations, median of 5 runs.
+Benchmarked on PHP 8.5 with real-world inputs (German/French/Russian blog titles, product names, URL slugs, long text). Each profile was run in an isolated process with 20s CPU cooldown between runs, 5000 iterations, median of 5 runs.
 
 | Profile | to_ascii | to_slugify | to_transliterate | Total | vs Original |
 |---------|----------|------------|-----------------|-------|-------------|
-| **original** (voku 2.0.3) | 754 ms | 1020 ms | 1672 ms | 4247 ms | — |
-| **fork** (no extensions) | 287 ms | 437 ms | 1702 ms | 2727 ms | **-36%** |
-| **fork** + mbstring | 267 ms | 380 ms | 1191 ms | 2106 ms | **-50%** |
-| **fork** + iconv | 275 ms | 374 ms | 1517 ms | 2431 ms | **-43%** |
-| **fork** + all extensions | 269 ms | 394 ms | 1178 ms | 2112 ms | **-50%** |
+| **original** (voku 2.0.3) | 742 ms | 936 ms | 1554 ms | 3953 ms | — |
+| **fork** (no extensions) | 268 ms | 382 ms | 1540 ms | 2455 ms | **-38%** |
+| **fork** + mbstring | 265 ms | 378 ms | 1174 ms | 2073 ms | **-48%** |
+| **fork** + all extensions | 270 ms | 371 ms | 1171 ms | 2072 ms | **-48%** |
 
-The core `to_ascii()` and `to_slugify()` improvements are pure PHP — no extensions needed. Extensions accelerate `to_transliterate()` by up to 31%.
+The `to_ascii()` and `to_slugify()` improvements are pure PHP — no extensions needed. `ext-mbstring` accelerates `to_transliterate()` by 24% via `mb_str_split()` replacing `preg_match_all` for character splitting.
 
 Run the benchmark yourself:
 
@@ -50,14 +49,10 @@ composer require webpatser/portable-ascii
 
 This automatically replaces `voku/portable-ascii` via Composer's `replace` directive. No code changes needed — `\voku\helper\ASCII` continues to work.
 
-For best performance, install the suggested extensions:
+For best transliteration performance, install ext-mbstring:
 
 ```bash
-# Most impactful for transliteration
-sudo apt install php-intl php-mbstring
-
-# Also helps
-sudo apt install php-iconv
+sudo apt install php-mbstring
 ```
 
 ## Usage
@@ -84,9 +79,8 @@ Works with Laravel 11, 12, and 13. All extensions are optional — the library a
 
 | Extension | Impact | Used by |
 |-----------|--------|---------|
-| ext-intl | Fastest transliteration via ICU | `to_transliterate()` (strict mode) |
-| ext-mbstring | Faster character splitting | `to_transliterate()` fallback |
-| ext-iconv | Fast ASCII transliteration | `to_transliterate()` fallback |
+| ext-mbstring | **-24%** on `to_transliterate()` | `mb_str_split()` for character splitting |
+| ext-intl | Fastest transliteration via ICU | `to_transliterate()` in strict mode only |
 
 ## Credits
 

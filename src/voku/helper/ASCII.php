@@ -190,7 +190,7 @@ final class ASCII
         8297 => "\xE2\x81\xA9",
     ];
 
-    /** @var array{php: int, mbstring: bool, iconv: bool, intl: bool}|null */
+    /** @var array{php: int, mbstring: bool, intl: bool}|null */
     private static ?array $CAPABILITIES = null;
 
     private static function capabilities(): array
@@ -199,7 +199,6 @@ final class ASCII
             self::$CAPABILITIES = [
                 'php'      => \PHP_VERSION_ID,
                 'mbstring' => \extension_loaded('mbstring'),
-                'iconv'    => \extension_loaded('iconv'),
                 'intl'     => \extension_loaded('intl'),
             ];
         }
@@ -210,7 +209,7 @@ final class ASCII
     /**
      * Override capability detection (for benchmarking/testing only).
      *
-     * @param array{php?: int, mbstring?: bool, iconv?: bool, intl?: bool}|null $caps
+     * @param array{php?: int, mbstring?: bool, intl?: bool}|null $caps
      */
     public static function setCapabilities(?array $caps): void
     {
@@ -223,7 +222,6 @@ final class ASCII
         self::$CAPABILITIES = [
             'php'      => $caps['php'] ?? \PHP_VERSION_ID,
             'mbstring' => $caps['mbstring'] ?? false,
-            'iconv'    => $caps['iconv'] ?? false,
             'intl'     => $caps['intl'] ?? false,
         ];
     }
