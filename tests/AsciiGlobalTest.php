@@ -37,8 +37,8 @@ test('charsArrayWithOneLanguage', function () {
 
     $array = ASCII::charsArrayWithOneLanguage('de_at');
     expect($array['replace'])->toContain('Ae');
-    expect($array['replace'])->toContain('sz');
-    expect($array['replace'])->not->toContain('ss');
+    expect($array['replace'])->toContain('ss');
+    expect($array['replace'])->not->toContain('sz');
     expect($array['orig'])->toContain('ß');
 
     $array = ASCII::charsArrayWithOneLanguage('de-CH');
@@ -175,7 +175,7 @@ test('to_slugify', function (
     ['user-at-host', 'user@host'],
     ['using-strings-like-foo-bar', 'Using strings like fòô bàř'],
     ['numbers-1234', 'numbers 1234'],
-    ['perevirka-riadka', 'перевірка рядка'],
+    ['perevirka-ryadka', 'перевірка рядка'],
     ['bukvar-s-bukvoi-y', 'букварь с буквой ы'],
     ['podieexal-k-podieezdu-moego-doma', 'подъехал к подъезду моего дома'],
     ['foo:bar:baz', 'Foo bar baz', ':'],
@@ -187,7 +187,7 @@ test('to_slugify', function (
     ['an_odd_string', '--   An odd__   string-_', '_'],
     ['Stoynostta-tryabva-da-bade-lazha', 'Стойността трябва да бъде лъжа', '-', 'bg', false],
     ['Dieser-Wert-sollte-groesser-oder-gleich', 'Dieser Wert sollte größer oder gleich', '-', 'de', false],
-    ['Dieser-Wert-sollte-groeszer-oder-gleich', 'Dieser Wert sollte größer oder gleich', '-', 'de_AT', false],
+    ['Dieser-Wert-sollte-groesser-oder-gleich', 'Dieser Wert sollte größer oder gleich', '-', 'de_AT', false],
     ['Auti-i-timi-prepi-na-inai-psefdis', 'Αυτή η τιμή πρέπει να είναι ψευδής', '-', 'el', false],
     ['Gai-Bian-Liang-De-Zhi-Ying-Wei', '该变量的值应为', '-', ASCII::CHINESE_LANGUAGE_CODE, false, false, true],
     ['Gai-Bian-Shu-De-Zhi-Ying-Wei', '該變數的值應為', '-', 'zh_TW', false, false, true],
@@ -220,7 +220,7 @@ test('to_ascii with providers', function (
     [' TEST 3 Celsius ', ' ŤÉŚŢ 3°C', ASCII::ENGLISH_LANGUAGE_CODE, true, true],
     ['f = z = 3', 'φ = ź = 3'],
     ['perevirka', 'перевірка'],
-    ['lysaia gora', 'лысая гора'],
+    ['lysaya gora', 'лысая гора'],
     ['I  ', 'I ♥ 字'],
     ['I  ', 'I ♥ 字', ASCII::ENGLISH_LANGUAGE_CODE],
     ['I ♥ 字', 'I ♥ 字', ASCII::ENGLISH_LANGUAGE_CODE, false],
@@ -277,7 +277,7 @@ test('to_ascii with providers', function (
     ['Kyrgyzca', 'Кыргызча', ASCII::KIRGHIZ_LANGUAGE_CODE],
     ['Hayeren', 'Հայերեն', ASCII::ARMENIAN_LANGUAGE_CODE],
     ['bangla', 'বাংলা', ASCII::BENGALI_LANGUAGE_CODE],
-    ['belaruskaia', 'беларуская', ASCII::BELARUSIAN_LANGUAGE_CODE],
+    ['belaruskaya', 'беларуская', ASCII::BELARUSIAN_LANGUAGE_CODE],
     ['\'amaarenyaa', 'አማርኛ', ASCII::AMHARIC_LANGUAGE_CODE],
     ['Ri Ben Yu  (nihongo)', '日本語 (にほんご)', ASCII::JAPANESE_LANGUAGE_CODE],
     ['een oplossing - aou', 'één oplossing - äöü', ASCII::DUTCH_LANGUAGE_CODE],
@@ -327,9 +327,13 @@ test('to_ascii with providers', function (
     ['shhuka', 'щука', ASCII::RUSSIAN_GOST_2000_B_LANGUAGE_CODE],
     ['dity', 'діти', ASCII::UKRAINIAN_LANGUAGE_CODE],
     ['horokh', 'горох', ASCII::UKRAINIAN_LANGUAGE_CODE],
-    ['shchastia', 'щастя', ASCII::UKRAINIAN_LANGUAGE_CODE],
+    ['shchastya', 'щастя', ASCII::UKRAINIAN_LANGUAGE_CODE],
     ['Chernivtsi', 'Чернівці', ASCII::UKRAINIAN_LANGUAGE_CODE],
     ['shtany', 'штани', ASCII::UKRAINIAN_LANGUAGE_CODE],
+    ['zhovten', 'жовтень', ASCII::UKRAINIAN_LANGUAGE_CODE],
+    ['rozghon', 'розгон', ASCII::UKRAINIAN_LANGUAGE_CODE],
+    ['mol', 'моль', ASCII::UKRAINIAN_LANGUAGE_CODE],
+    ['Yevropeyets', 'Європеєць', ASCII::UKRAINIAN_LANGUAGE_CODE],
     ['universitet', 'университет', ASCII::KAZAKH_LANGUAGE_CODE],
     ['univerzitni', 'univerzitní', ASCII::CZECH_LANGUAGE_CODE],
     ['besoegende', 'besøgende', ASCII::DANISH_LANGUAGE_CODE],
@@ -374,10 +378,10 @@ test('to_ascii with providers', function (
     ['aeoeueAeOeUess (r)', 'äöüÄÖÜß ®', 'de_DE', true, false, true],
     ['aeoeueAeOeUess (r)', 'äöüÄÖÜß ®', 'de_DE', false, false, true],
     ['aeoeueAeOeUess', 'äöüÄÖÜß', ASCII::GERMAN_LANGUAGE_CODE],
-    ['aeoeueAeOeUesz', 'äöüÄÖÜß', ASCII::GERMAN_AUSTRIAN_LANGUAGE_CODE],
+    ['aeoeueAeOeUess', 'äöüÄÖÜß', ASCII::GERMAN_AUSTRIAN_LANGUAGE_CODE],
     ['aeoeueAeOeUess', 'äöüÄÖÜß', ASCII::GERMAN_SWITZERLAND_LANGUAGE_CODE],
     ['aouAOUss', 'äöüÄÖÜß', ASCII::FRENCH_LANGUAGE_CODE],
-    ['aouAOUsz', 'äöüÄÖÜß', ASCII::FRENCH_AUSTRIAN_LANGUAGE_CODE],
+    ['aouAOUss', 'äöüÄÖÜß', ASCII::FRENCH_AUSTRIAN_LANGUAGE_CODE],
     ['aouAOUss', 'äöüÄÖÜß', ASCII::FRENCH_SWITZERLAND_LANGUAGE_CODE],
     ['h H sht Sht a A ia yo', 'х Х щ Щ ъ Ъ иа йо', 'bg'],
     ['a-', "a\xa0\xa1-öäü"],
