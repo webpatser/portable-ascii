@@ -835,7 +835,16 @@ final class ASCII
                 $matchCount = \count($uniqueChars);
 
                 if ($matchCount > 10) {
-                    // Dense non-ASCII: strtr() on full map — C-level scan wins
+                    // Dense non-ASCII: strtr() on full map, C-level scan wins
+                    $str = \strtr($str, $REPLACE_HELPER_CACHE[$cacheKey]);
+                } elseif (
+                    !$replace_single_chars_only
+                    &&
+                    \preg_match('/[A-Za-z][\x{0300}-\x{036F}]/u', $str) === 1
+                ) {
+                    // Mixed keys like "A̧" (ASCII letter + combining mark) are not captured
+                    // by REGEX_ASCII, so the sparse branch would miss them. Fall through to
+                    // the full map so strtr() can match the composed key.
                     $str = \strtr($str, $REPLACE_HELPER_CACHE[$cacheKey]);
                 } else {
                     // Sparse non-ASCII: build minimal map from matched chars only

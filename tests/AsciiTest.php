@@ -215,3 +215,52 @@ test('tab to ascii', function () {
     expect(ASCII::to_ascii("a\tb\tc", 'en', false))->toBe("a\tb\tc");
     expect(ASCII::to_ascii("a\tb\tc", 'en', true))->toBe('a b c');
 });
+
+test('to_ascii is deterministic across repeated calls with degree sign', function () {
+    $input = 'Webinaire des transitions n°34 - Agir et mobiliser pour la biodiversité dans son entreprise';
+    $expected = 'Webinaire des transitions n34 - Agir et mobiliser pour la biodiversite dans son entreprise';
+
+    expect(ASCII::to_ascii($input, 'en'))->toBe($expected);
+    expect(ASCII::to_ascii($input, 'en'))->toBe($expected);
+});
+
+test('to_ascii handles ASCII letter plus combining mark on the short path', function () {
+    $cases = [
+        'A̧' => 'A',
+        'a̧' => 'a',
+        'C̈' => 'C',
+        'c̈' => 'c',
+    ];
+
+    foreach ($cases as $input => $expected) {
+        expect(ASCII::to_ascii($input, '', false))->toBe($expected);
+    }
+});
+
+test('to_ascii keeps mixed-key behavior stable across short-path modes', function () {
+    $scenarios = [
+        'short mixed key without cleanup' => [
+            'args' => ['A̧', '', false],
+            'expected' => 'A',
+        ],
+        'short mixed key with cleanup' => [
+            'args' => ['C̈', '', true],
+            'expected' => 'C',
+        ],
+        'single-char-only without cleanup keeps original input' => [
+            'args' => ['A̧', '', false, false, false, true],
+            'expected' => 'A̧',
+        ],
+        'single-char-only with cleanup strips combining mark' => [
+            'args' => ['A̧', '', true, false, false, true],
+            'expected' => 'A',
+        ],
+    ];
+
+    foreach ($scenarios as $label => $scenario) {
+        for ($pass = 1; $pass <= 2; ++$pass) {
+            expect(ASCII::to_ascii(...$scenario['args']))
+                ->toBe($scenario['expected'], $label . ' pass ' . $pass);
+        }
+    }
+});

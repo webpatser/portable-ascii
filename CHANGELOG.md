@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-04-27
+
+### Fixed
+- `to_ascii()` mixed-key handling on the sparse branch: ASCII letter + combining mark inputs (e.g. `A̧`, `C̈`) now resolve to their composed-key replacements instead of passing through unchanged
+
+### Tests
+- Regression coverage for deterministic `to_ascii()` output across repeated calls with the degree sign
+- Regression coverage for ASCII + combining mark keys on the short path, including `replace_single_chars_only` permutations
+
 ## [3.1.0] - 2026-04-09
 
 ### Performance
